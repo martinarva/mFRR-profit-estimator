@@ -8,36 +8,47 @@ app = Flask(__name__)
 def process_csv(filepath):
     df = pd.read_csv(filepath)
 
-    downTot, downComp, upTot, upComp = 0, 0, 0, 0
+    # Convert "Start" column to datetime to extract Year & Month
+    df["Start"] = pd.to_datetime(df["Start"])
+    df["Year-Month"] = df["Start"].dt.to_period("M")  # Grouping by Year-Month (e.g., 2025-03)
 
-    for _, r in df.iterrows():
-        dur = r.Duration
-        dir = r.Direction
-        power = r['Activated power']
-        frr = r['mFRR price']
-        nps = r['NPS price']
+    results = {}  # Dictionary to store results for each month
 
-        if dir == 'DOWN':
-            kWh = dur / 60 * power / 1000
-            money = (nps - frr) * kWh * 0.8 / 1000
-            downTot += kWh
-            downComp += money
+    # Group data by Year-Month
+    for period, group in df.groupby("Year-Month"):
+        downTot, downComp, upTot, upComp = 0, 0, 0, 0
 
-        if dir == 'UP':
-            kWh = dur / 60 * power / 1000
-            upTot += kWh
-            money = (frr - nps) * kWh * 0.8 / 1000
-            upComp += money
+        for _, r in group.iterrows():
+            dur = r.Duration
+            dir = r.Direction
+            power = r["Activated power"]
+            frr = r["mFRR price"]
+            nps = r["NPS price"]
 
-    totalCompensation = downComp + upComp  # New calculation
-    
-    return {
-        "Total down kWh": round(downTot, 2),
-        "Total down compensation (€)": round(downComp, 2),
-        "Total up kWh": round(upTot, 2),
-        "Total up compensation (€)": round(upComp, 2),
-        "Total compensation (€)": round(totalCompensation, 2)
-    }
+            if dir == "DOWN":
+                kWh = dur / 60 * power / 1000
+                money = (nps - frr) * kWh * 0.8 / 1000
+                downTot += kWh
+                downComp += money
+
+            if dir == "UP":
+                kWh = dur / 60 * power / 1000
+                upTot += kWh
+                money = (frr - nps) * kWh * 0.8 / 1000
+                upComp += money
+
+        totalCompensation = downComp + upComp
+
+        # Store results for each Year-Month
+        results[str(period)] = {
+            "Total down kWh": round(downTot, 2),
+            "Total down compensation (€)": round(downComp, 2),
+            "Total up kWh": round(upTot, 2),
+            "Total up compensation (€)": round(upComp, 2),
+            "Total compensation (€)": round(totalCompensation, 2)
+        }
+
+    return results
 
 @app.route('/')
 def upload_page():
@@ -63,4 +74,4 @@ def upload_file():
 
 if __name__ == '__main__':
     os.makedirs("uploads", exist_ok=True)
-    app.run(host='0.0.0.0', port=5000, debug=True)
+    app.run(host='0.0.0.0', port=5023, debug=True)

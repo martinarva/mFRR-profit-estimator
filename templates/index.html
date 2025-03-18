@@ -7,6 +7,8 @@
     <style>
         body { font-family: Arial, sans-serif; text-align: center; }
         #result { margin-top: 20px; font-size: 18px; }
+        .month-section { margin-top: 20px; padding: 10px; border: 1px solid #ccc; border-radius: 8px; display: inline-block; text-align: left; }
+        .total-compensation { font-weight: bold; color: green; }
     </style>
 </head>
 <body>
@@ -35,16 +37,25 @@
             .then(response => response.json())
             .then(data => {
                 let resultDiv = document.getElementById('result');
+                resultDiv.innerHTML = ""; // Clear previous results
+
                 if (data.error) {
-                    resultDiv.innerHTML = "<p style='color:red;'>" + data.error + "</p>";
+                    resultDiv.innerHTML = `<p style='color:red;'>${data.error}</p>`;
                 } else {
-                    resultDiv.innerHTML = `
-                        <p><strong>Total Down kWh:</strong> ${data["Total down kWh"]}</p>
-                        <p><strong>Total Down Compensation (€):</strong> ${data["Total down compensation (€)"]}</p>
-                        <p><strong>Total Up kWh:</strong> ${data["Total up kWh"]}</p>
-                        <p><strong>Total Up Compensation (€):</strong> ${data["Total up compensation (€)"]}</p>
-                        <p><strong>Total Compensation (€):</strong> <span style="font-weight:bold; color:green;">${data["Total compensation (€)"]}</span></p>
-                    `;
+                    // Loop through months and display results
+                    for (const [month, values] of Object.entries(data)) {
+                        let monthDiv = document.createElement("div");
+                        monthDiv.classList.add("month-section");
+                        monthDiv.innerHTML = `
+                            <h3>${month}</h3>
+                            <p><strong>Total Down kWh:</strong> ${values["Total down kWh"]}</p>
+                            <p><strong>Total Down Compensation (€):</strong> ${values["Total down compensation (€)"]}</p>
+                            <p><strong>Total Up kWh:</strong> ${values["Total up kWh"]}</p>
+                            <p><strong>Total Up Compensation (€):</strong> ${values["Total up compensation (€)"]}</p>
+                            <p><strong>Total Compensation (€):</strong> <span class="total-compensation">${values["Total compensation (€)"]}</span></p>
+                        `;
+                        resultDiv.appendChild(monthDiv);
+                    }
                 }
             })
             .catch(error => console.error('Error:', error));

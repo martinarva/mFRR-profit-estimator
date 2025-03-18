@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>mFRR Profit Estimator</title>
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; }
+        #result { margin-top: 20px; font-size: 18px; }
+    </style>
+</head>
+<body>
+    <h1>Upload CSV to Calculate mFRR Profit</h1>
+    
+    <input type="file" id="fileInput">
+    <button onclick="uploadFile()">Upload & Process</button>
+
+    <div id="result"></div>
+
+    <script>
+        function uploadFile() {
+            let fileInput = document.getElementById('fileInput');
+            if (fileInput.files.length === 0) {
+                alert("Please select a CSV file!");
+                return;
+            }
+
+            let formData = new FormData();
+            formData.append("file", fileInput.files[0]);
+
+            fetch('/upload', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                let resultDiv = document.getElementById('result');
+                if (data.error) {
+                    resultDiv.innerHTML = "<p style='color:red;'>" + data.error + "</p>";
+                } else {
+                    resultDiv.innerHTML = `
+                        <p><strong>Total Down kWh:</strong> ${data["Total down kWh"]}</p>
+                        <p><strong>Total Down Compensation (€):</strong> ${data["Total down compensation (€)"]}</p>
+                        <p><strong>Total Up kWh:</strong> ${data["Total up kWh"]}</p>
+                        <p><strong>Total Up Compensation (€):</strong> ${data["Total up compensation (€)"]}</p>
+                        <p><strong>Total Compensation (€):</strong> <span style="font-weight:bold; color:green;">${data["Total compensation (€)"]}</span></p>
+                    `;
+                }
+            })
+            .catch(error => console.error('Error:', error));
+        }
+    </script>
+</body>
+</html>

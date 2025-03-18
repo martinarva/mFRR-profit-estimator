@@ -74,4 +74,4 @@ def upload_file():
 
 if __name__ == '__main__':
     os.makedirs("uploads", exist_ok=True)
-    app.run(host='0.0.0.0', port=5023, debug=True)
+    app.run(host='0.0.0.0', port=5000, debug=True)

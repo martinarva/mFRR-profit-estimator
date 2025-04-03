@@ -8,6 +8,9 @@ app = Flask(__name__)
 def process_csv(filepath):
     df = pd.read_csv(filepath)
 
+    # Filter out the total row where "Start" == "Total:"
+    df = df[df["Start"] != "Total:"]
+
     # Convert "Start" column to datetime to extract Year & Month
     df["Start"] = pd.to_datetime(df["Start"])
     df["Year-Month"] = df["Start"].dt.to_period("M")  # Grouping by Year-Month (e.g., 2025-03)
